@@ -521,6 +521,7 @@ void glShaderSource_fake(GLuint shader, GLsizei count, const GLchar **string, co
 		fclose(f);
 		shd_src[len] = 0;
 		glShaderSource(shader, 1, &shd_src, NULL);
+		free(shd_src);
 	} else {
 		f = fopen(fname, "wb");
 		fwrite(*string, 1, strlen(*string), f);
@@ -1390,11 +1391,13 @@ int GetBooleanField(void *env, void *obj, int fieldID) {
 	return 1;
 }
 
+uint8_t *res = NULL;
 void *CallObjectMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
 	char fname[256];
 	SceUID fd;
 	SceIoDirent g_dir;
-	uint8_t *res = malloc(2 * 1024 * 1024);
+	if (!res)
+		res = malloc(2 * 1024 * 1024);
 	int res_idx = 4;
 	int res_num = 0;
 
@@ -1409,6 +1412,7 @@ void *CallObjectMethodV(void *env, void *obj, int methodID, uintptr_t *args) {
 			res_idx += strlen(g_dir.d_name) + 1;
 			res_num++;
 		}
+		sceIoDclose(fd);
 		*(int *)res = res_num;
 		return res;
 	default:
