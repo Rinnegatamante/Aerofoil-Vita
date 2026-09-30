@@ -10,6 +10,8 @@ endif()
 
 project(Aerofoil C CXX)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(AEROFOIL_MEDIA REQUIRED SDL2_mixer SDL2_image SDL2_ttf SDL2_net sndfile vorbisfile)
 set(VITA_APP_NAME "Aerofoil")
 set(VITA_TITLEID  "AEROFOIL1")
 set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
@@ -25,28 +27,16 @@ add_executable(Aerofoil
   loader/ctype_patch.c
 )
 
+set_target_properties(Aerofoil PROPERTIES LINKER_LANGUAGE CXX)
+target_compile_options(Aerofoil PRIVATE ${AEROFOIL_MEDIA_STATIC_CFLAGS})
+
 target_link_libraries(Aerofoil
   -Wl,--whole-archive pthread -Wl,--no-whole-archive
-  SDL2_mixer
-  SDL2_image
-  SDL2_ttf
-  SDL2_net
-  freetype
-  SDL2
-  png
-  webp
-  jpeg
-  mikmod
+  -Wl,--start-group
+  ${AEROFOIL_MEDIA_STATIC_LDFLAGS}
   z
   m
-  stdc++
-  opensles
-  sndfile
-  vorbis
-  vorbisenc
-  vorbisfile
-  ogg
-  FLAC
+  OpenSLES
   openal
   imgui
   vitaGL
@@ -68,7 +58,6 @@ target_link_libraries(Aerofoil
   SceFios2_stub
   SceGxm_stub
   SceIme_stub
-  SceLibcBridge_stub
   SceShaccCg_stub
   SceSysmodule_stub
   ScePower_stub
@@ -76,7 +65,8 @@ target_link_libraries(Aerofoil
   SceMotion_stub
   SceHid_stub
   SceVshBridge_stub
-  SceKernelDmacmgr_stub
+  SceKernelDmacMgr_stub
+  -Wl,--end-group
 )
 
 vita_create_self(eboot.bin Aerofoil UNSAFE)
@@ -88,3 +78,6 @@ vita_create_vpk(Aerofoil.vpk ${VITA_TITLEID} eboot.bin
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/die.png sce_sys/livearea/contents/die.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
 )
+
+# Keep legacy invalid returns diagnostic-only instead of inventing results.
+set_property(SOURCE loader/so_util.c APPEND PROPERTY COMPILE_OPTIONS -Wno-error=return-mismatch -Wno-error=incompatible-pointer-types)
