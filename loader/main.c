@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <wchar.h>
 #include <wctype.h>
@@ -423,7 +424,6 @@ extern void *__cxa_finalize;
 extern void *__cxa_call_unexpected;
 extern void *__gnu_unwind_frame;
 extern void *__stack_chk_fail;
-int open(const char *pathname, int flags);
 
 static int __stack_chk_guard_fake = 0x42424242;
 
@@ -520,7 +520,8 @@ void glShaderSource_fake(GLuint shader, GLsizei count, const GLchar **string, co
 		fread(shd_src, 1, len, f);
 		fclose(f);
 		shd_src[len] = 0;
-		glShaderSource(shader, 1, &shd_src, NULL);
+		const GLchar *shader_source = shd_src;
+		glShaderSource(shader, 1, &shader_source, NULL);
 		free(shd_src);
 	} else {
 		f = fopen(fname, "wb");
